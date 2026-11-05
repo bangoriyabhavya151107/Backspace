@@ -1,0 +1,408 @@
+You are a senior product designer and frontend engineer. Build the complete FIRST VERSION (v1) of "Backspace", a free, offline-first typing-practice web app for developers. Build everything below in one go: all pages, all sections, the design system, the animations, the typing engine and the data logic. It must feel like a finished, crafted product, not a template.
+
+I have attached my logo. Use it exactly as supplied. Do not redraw, recolour or restyle it. Save it as a project asset and render it through ONE reusable <Logo /> component (variants: "full" wordmark and "icon" only). If you cannot use the attached file, build <Logo /> as a temporary text wordmark "Backspace" in Bricolage Grotesque ExtraBold with a solid vermilion block cursor after the final "e", and comment clearly where my image file goes so I can swap it in one place. Also generate an inline-SVG favicon as a placeholder (rounded square in ink #1B1A17, cream "B", vermilion arrow).
+
+========================================
+1. PRODUCT
+========================================
+Most typing tests use prose. Developers type symbols, flags and commands ({ } [ ] ( ) => !== && || | ~ $ @ # \ / --) and nobody trains them. Backspace is typing practice for the characters developers actually type: git, terminal, Docker, SQL, code and AI prompts, plus a symbol-drill mode, per-key analytics that find your slowest and most error-prone keys, and adaptive practice built from them. Everything runs in the browser and works offline. No account in v1. All data stays on the device.
+Tagline (hero and footer only, never inside the logo): "Hit Backspace Less."
+Positioning line: "Typing practice for the characters developers actually type."
+
+========================================
+2. TECH CONSTRAINTS
+========================================
+- React 19, TypeScript (strict), Vite, Tailwind CSS v4 with CSS variables for all colour tokens, React Router, Motion ("motion/react") for UI animation, lucide-react for icons.
+- No backend, no API keys, no Gemini calls in v1. No external images or stock photos. Everything is drawn with CSS and SVG.
+- Fonts from Google Fonts: "Bricolage Grotesque" (display, 700-800), "IBM Plex Sans" (body, 400/500/600), "IBM Plex Mono" (typing and labels, 400/500/600, ligatures OFF via font-variant-ligatures: none), "Noto Sans Devanagari" (only for the Hindi line). Add system-font fallbacks and font-display: swap.
+- Persistence: localStorage under the namespace "backspace:v1:", wrapped in try/catch with an in-memory fallback if storage is blocked, plus a schema version for future migrations.
+- PWA: add a web manifest and a basic service worker that caches the app shell so the app works offline. If that is not possible in this environment, add the manifest only and leave a clear TODO comment.
+- Code quality: small focused components; the typing engine and scoring as plain TypeScript modules with NO React imports (src/engine/*); the content bank in src/data/content.ts; all tokens in one CSS file; short comments for non-obvious logic.
+
+========================================
+3. DESIGN SYSTEM: "PAPER AND INK"
+========================================
+Mood: calm, focused, crafted, trustworthy, bold. Warm paper and ink, like a printed manual crossed with a terminal. Flat, sharp, precise. It must NOT look like a typical AI-generated or SaaS template: no purple or blue gradients, no glow, no glassmorphism, no dark-navy backgrounds, no centered-card-on-gradient hero, no generic icon grids.
+
+Colour tokens (CSS variables; light is the default, dark is a theme):
+LIGHT: --paper #F2EDE4 (page), --card #FAF7F0, --line #D9D2C3, --ink #1B1A17, --text-muted #6B665B (UI labels), --untyped #8A8478 (typing text only, large sizes), --accent #FF5B1F (vermilion: cursor, arrow, progress line, active underline, filled buttons with INK text), --accent-ink #B8390A (the only vermilion allowed for small text on light), --error #C8102E, --success #2F4B3A, --gold #C8962E (decorative only).
+DARK: --paper #14110D, --card #1D1914, --line #3A332A, --ink #F2EDE4, --text-muted #A89D8A, --untyped #8C8170, --accent #FF7A45, --accent-ink #FF9A6B, --error #FF6B6B, --success #8FBF6A, --gold #D9A93F.
+Rules: vermilion is rare, a few small touches per screen, so it feels designed. Never use vermilion for small text on light backgrounds. Theme toggle: light / dark / system, persisted, no flash on load.
+
+Typography: hero display clamp(48px, 9vw, 120px), weight 800, tracking -0.03em, line-height 0.95 (Bricolage Grotesque). H2 clamp(32px, 5vw, 56px). H3 24px. Body 17-18px IBM Plex Sans, line-height 1.6. Labels: 12px IBM Plex Mono, uppercase, letter-spacing 0.08em. Typing text: IBM Plex Mono 28px desktop / 20px mobile, line-height 1.7.
+
+Shape language: 3px corners on keycaps, chips and buttons; 8px on cards; 1px borders; NO drop shadows and NO gradients anywhere. Depth comes from a thicker bottom border (keycap style: 1px border, 3px bottom border; on :active the bottom border shrinks to 1px and the element moves down 2px). 8px spacing scale, max content width 1200px, generous whitespace, 12-column grid on desktop, single column on mobile.
+
+Indian identity (subtle, premium, never clip-art):
+(a) the ORNAMENT BAND: an original, seamlessly repeating inline-SVG pattern about 12px tall in --gold: two hairline rules with small lotus shapes alternating with pointed-arch (ogee) shapes between them, in even 1px linework. Used ONLY in the footer, as a divider between some landing sections, on the share card, and on the Leaderboard page.
+(b) the Devanagari line "बैकस्पेस" under the wordmark on the About page and in the footer.
+(c) a subtle lotus-fan corner ornament on a few hero and About cards.
+STRICT: no ornament or pattern is ever placed near the typing text. No elephants, Om, peacocks, mandalas, flags or tricolours anywhere.
+
+Brand signature: the vermilion BLOCK CURSOR (solid rectangle, blinks with steps(1) every 1s). Use it after the hero headline, in the typing area, in the footer tagline, and as the loading indicator. Use keycap-style chips for keyboard shortcuts.
+
+========================================
+4. GLOBAL LAYOUT
+========================================
+HEADER (sticky, 64px, paper background, 1px bottom border that appears after scrolling): <Logo variant="full" /> at left. Nav: Practice, Progress, Leaderboard (with a small "SOON" keycap chip), About. Far right: a streak chip (flame icon + number, hidden until the first completed test), the theme toggle, and a vermilion-filled keycap button "Start typing" (ink text). The active route gets a vermilion underline. Mobile: a hamburger opens a full-height drawer with large links and the same actions. During an ACTIVE test the header nav fades to 25% opacity (focus mode) and returns on finish or Esc.
+FOOTER: starts with the gold ornament band. Four columns: (1) <Logo /> + the Devanagari line + the tagline "Hit Backspace Less." + "Designed and built in India for developers everywhere."; (2) Product: Practice, Progress, Leaderboard, Changelog; (3) Company: About, Contact, GitHub (external); (4) Legal: Privacy, Terms. Bottom row: "© 2026 Backspace", an online/offline status chip (green dot "Online" / grey dot "Offline, still works", driven by navigator.onLine events) and a "Back to top" keycap button.
+ROUTE TRANSITIONS: 180ms fade plus 8px upward slide on enter, no exit animation. Scroll to top on route change. Skip-to-content link. Visible focus ring: 2px vermilion with 2px offset.
+GLOBAL HOTKEYS (never active while the typing arena is focused): "g then p" goes to Practice, "g then s" to Progress, "?" opens a shortcuts modal, "t" toggles the theme.
+
+========================================
+5. ROUTES AND PAGES
+========================================
+/ Landing, /practice, /results, /progress, /leaderboard, /settings, /about, /contact, /privacy, /terms, /changelog, and a custom 404 for everything else. Each route sets its own document.title ("Page name – Backspace") and meta description through a small hook. Put the default title "Backspace – Typing Practice for Developers", the description, and Open Graph and Twitter tags in index.html.
+
+--------------------------------
+5.1 LANDING "/" (the showpiece: storytelling, reveals, hover craft)
+--------------------------------
+Section 1, HERO. Left: mono eyebrow "TYPING PRACTICE FOR DEVELOPERS". Headline "Hit Backspace Less." in the display style. It TYPES ITSELF on load with ONE deliberate human mistake: it types "Hit Backspas", hesitates 300ms, deletes the "s" with a visible backspace, then types "ce Less." The vermilion block cursor then keeps blinking. Keep the full headline in an sr-only element so screen readers read it once. Subheadline: "Practice git, terminal, Docker, SQL, code and AI prompts. Find the keys that slow you down and fix them." Buttons: a vermilion keycap "Start typing, it's free" (to /practice) and a ghost keycap "See how it works" (smooth scroll). Under them, three mono microfacts: "No account", "Works offline", "Your data stays on your device".
+Right (below on mobile): a LIVE MINI TEST card with a very subtle gold corner ornament, using the SAME typing engine as the app: one line, $ git commit -m "ship it". Visitors can type immediately (autofocus on desktop, on click otherwise). It shows live WPM and accuracy, and when finished shows "Nice. Now try a full 60-second test" with a button. A small keycap hint "Tab restart".
+Background: flat paper. One huge, very faint (4% opacity) block-cursor shape bleeding off the right edge. No gradients.
+
+Section 2, MARQUEE of keycap chips (slow, pure CSS, pauses on hover): git, grep, docker, kubectl, SELECT, async/await, regex, =>, !==, &&, pipes, JSON, Python, TypeScript, prompts. Separated by small gold diamonds.
+
+Section 3, THE STORY (scroll-driven pinned section, 3 steps; headline "You type symbols all day. Nobody trains them."):
+ Step 1: a normal sentence types out quickly and a WPM counter animates up to 78.
+ Step 2: a command full of symbols types out, the counter drops to 41, and the slow characters get vermilion underlines as they appear.
+ Step 3: an SVG keyboard appears with the slow keys tinted vermilion and the caption "Backspace finds these keys and drills them."
+Drive the steps with scroll progress (Motion useScroll or IntersectionObserver). On mobile or with prefers-reduced-motion, show the three steps as a simple stacked static layout.
+
+Section 4, BENTO FEATURES: an asymmetric 12-column grid (not equal cards), each card with its own hover interaction and no shadows:
+ a. "Real commands, not prose": a mini terminal card cycling git/docker/SQL lines; hover pauses it and highlights the symbols.
+ b. "Symbol drills": big glyphs { } => !== | ~ that press down like keycaps on hover and show a tiny latency tooltip.
+ c. "Slow-key heatmap": a mini keyboard whose keys glow from sample data; hovering a key shows "avg 214 ms, 9% errors".
+ d. "30 / 60 / 120 / 300 seconds": four pills that animate a draining timer ring on hover.
+ e. "Easy, Medium, Hard": three stacked lines of increasing complexity that scramble-reveal on hover.
+ f. "Offline-first and private": a laptop outline made of CSS lines, a small "no wifi" mono label, and the text "Everything stays on your device."
+ g. "Shareable result cards": a sample card that tilts toward the cursor (max 4 degrees, perspective 800px).
+ h. "Streaks, levels and badges": a mini Intern-to-Principal ladder.
+
+Section 5, MODES: seven category cards (Git, Terminal, Docker, SQL, Code, AI Prompts, Symbols), a horizontal scroll-snap row on mobile and a grid on desktop. Each shows a keycap icon and a line count, and on hover types a sample line with a typewriter effect. Clicking opens /practice?category=<slug>.
+
+Section 6, HOW IT WORKS: three big numbered keycaps (1, 2, 3) joined by a thin line that draws on scroll: "Pick a mode", "Type", "Fix your slow keys".
+
+Section 7, THE LADDER: a vertical timeline of levels (Intern, Junior, Mid, Senior, Staff, Principal), each with its WPM and accuracy target and a badge; the line fills as the section scrolls into view.
+
+Section 8, ORNAMENT BAND divider, then the "MADE IN INDIA" statement: a small card with the Devanagari line "बैकस्पेस", the text "Designed and built in India for developers everywhere.", and one sentence: "Developers type faster when the practice looks like their work."
+
+Section 9, FAQ accordion (animated height, keyboard accessible): "Is Backspace free?" (Yes, free in v1.) "Do I need an account?" (No, your data lives in your browser.) "Does it work offline?" (Yes, once loaded.) "Where does my data go?" (Nowhere. It stays on your device, and you can export or delete it in Settings.) "How is WPM calculated?" (Correct characters divided by 5, divided by minutes.) "What are slow keys?" (Keys where your average time between keystrokes is highest, or where you make the most mistakes.) "Can I practice on my phone?" (It works best with a physical keyboard.)
+
+Section 10, FINAL CTA: a huge "Hit Backspace Less." with the blinking block cursor, one vermilion keycap button "Start typing", and the three microfacts again.
+
+Reveal animations: section headings reveal line by line with a clip-path mask rising from 100% to 0 over 600ms, stagger 80ms, triggered once at 25% in view. Body text fades up 12px. Everything respects prefers-reduced-motion.
+
+--------------------------------
+5.2 PRACTICE "/practice" (the core product: simple, calm, FAST)
+--------------------------------
+Inside a 1040px max-width container, top to bottom:
+1. MODE ROW (one clean row, wraps on mobile):
+ - Category tabs: Git, Terminal, Docker, SQL, Code, AI Prompts, Symbols, plus "My weak keys" (adaptive mode, disabled with the tooltip "Complete a few tests first" until at least 5 tests are saved). The active tab has a vermilion underline.
+ - When Code is selected, a small language switch appears: JavaScript/TypeScript, Python.
+ - Duration pills: 30s, 60s, 120s, 300s.
+ - Difficulty segmented control: Easy, Medium, Hard.
+ - Toggles: "Sound" and "Keyboard overlay" (an on-screen keyboard under the card with the next key highlighted).
+ Selections persist and are reflected in the URL (?category=git&time=60&level=medium).
+2. LIVE STATS ROW above the card, left-aligned: WPM large (Bricolage), then ACCURACY, TIME LEFT and ERRORS as mono labels with numbers. Update every 250ms without ever blocking typing.
+3. TYPING CARD (the hero of the screen): a wide card with a thin vermilion progress line along its top edge that drains with time. Show 4 lines at a time (the viewport scrolls up one line as lines complete). Each line has a muted line-number gutter and a muted prompt: "$" for Git, Terminal and Docker, ">" for AI Prompts, none for Code, SQL and Symbols. The prompt is NOT typed. The user presses Enter to commit each line (Enter counts as one correct character when the line is complete).
+ Character states: untyped (--untyped), correct (--ink), incorrect (--error with a 2px underline; the expected character stays visible; no flashing, no shaking), and the current character marked by the vermilion block cursor. The caret moves INSTANTLY with no easing. Extra characters beyond the end of the line show in the error colour.
+ Behaviour: the timer starts on the first keystroke. Backspace deletes within the current line only; you cannot go back to previous lines. Tab restarts with new text (preventDefault while the arena is focused). Esc cancels and returns to the ready state. Block paste. When time runs out, finish immediately. Lines chain endlessly from the chosen bank, shuffled with no repeats until the bank is exhausted.
+ Ready state: the cursor blinks on the first character, stats show 0, and a caption reads "Start typing to begin." A hidden input captures keys; clicking anywhere on the card focuses it. If the window loses focus mid-test, dim the card and show "Click to continue typing" (the timer keeps running).
+ Focus mode: after the first keystroke the mode row and header nav fade to 25% opacity (200ms) and return on finish or Esc.
+4. SLOW KEYS STRIP below the card: label "YOUR SLOW KEYS" and up to 6 keycap chips with average ms from stored stats. Empty state: "Finish one test to see your slow keys." Clicking a chip starts a short weak-keys drill.
+5. SHORTCUT HINTS row of keycap chips: "Tab restart", "Esc exit", "Enter next line".
+6. On touch devices without a keyboard, show "Backspace works best with a physical keyboard" and still allow the test if a keyboard is attached.
+
+--------------------------------
+5.3 RESULTS "/results" (reads the last result from state; redirects to /practice if none)
+--------------------------------
+Hero: the big WPM number lands with a STAMP animation: it scales from 1.35 to 1 with a small overshoot while a vermilion ring expands and fades behind it (500ms), then counts up from 0 to the final value over 900ms (ease-out). Under it: an accuracy ring (SVG circle that draws), raw WPM, consistency %, characters (correct / incorrect / extra / missed), time, category and difficulty. Show a "NEW PERSONAL BEST" keycap chip with the previous best when relevant, and any badge or level unlocked (a "level up" modal with a keycap rising and the new title, e.g. "Senior Developer").
+Chart: a hand-drawn SVG line chart of WPM per second. The line draws itself (stroke-dashoffset, 800ms) and error moments appear as small vermilion ticks on the baseline. Hover shows the exact second and WPM.
+SLOW KEYS PANEL: a full on-screen QWERTY keyboard (SVG, including number row and symbols) coloured by average latency, with errors as vermilion corner dots, and a toggle "This test / All time". Hover shows the key, average ms and error %. A button "Practice these keys" starts the adaptive mode.
+SHARE CARD: a 1200x630 card rendered with the Canvas API (no libraries) on paper with the gold ornament band, showing the Backspace logo, big WPM, accuracy, category and duration, the level title, the date, and "Hit Backspace Less.". Buttons: "Download PNG", "Copy image" (clipboard API with graceful fallback), "Copy text" (e.g. "72 WPM, 98% accuracy on Git (60s). Backspace: Hit Backspace Less.").
+Actions: "Try again" (Tab also works), "New test", "View progress".
+
+--------------------------------
+5.4 PROGRESS "/progress"
+--------------------------------
+- Summary: level and title with an XP bar, current streak, longest streak, total tests, total practice time.
+- Personal bests table: category x duration (best WPM and accuracy) with a difficulty filter.
+- WPM over time: SVG line chart, daily average, range toggle (7 days, 30 days, all).
+- Practice calendar: a GitHub-contribution-style heatmap (last 26 weeks), intensity = tests that day in vermilion tints; hover shows date and count.
+- Slow keys: the full QWERTY heatmap (all time) plus ranked lists of the top 10 slow keys and top 10 error keys.
+- Badges grid: earned badges in colour, locked ones outlined with the requirement shown.
+- History: the last 50 tests in a sortable table (date, category, duration, difficulty, WPM, accuracy) with a per-row Delete and "Export JSON" / "Import JSON".
+- New-user empty state: keycap-built illustration and a button "Take your first test".
+
+--------------------------------
+5.5 LEADERBOARD "/leaderboard" (a genuine COMING SOON page)
+--------------------------------
+The gold ornament band, the headline "Leaderboards are coming.", and the line "Compete by category and duration, with accuracy-weighted scores." Show a PREVIEW of the future UI with dim rows clearly labelled "SAMPLE". Show a real, local-only "Your personal top 10" list from stored results. Add a notify-me form that only validates and stores the email locally, with the message "Saved on this device. We will wire this up soon." (no network call).
+
+--------------------------------
+5.6 SETTINGS "/settings"
+--------------------------------
+Simple rows grouped as: Appearance (theme: light, dark, system); Typing (font size slider 20-36px, line spacing, caret style: block / underline / bar, keyboard overlay on/off, key sound on/off with volume, stop-on-error on/off); Motion (reduce motion, overriding the system value); Data (export all data as JSON, import JSON, "Reset all data" with a typed-confirmation modal "type DELETE"); This device (storage used, app version, offline status). Settings apply instantly and persist. Key sounds are synthesised with the Web Audio API (a short filtered noise burst), with no audio files; default off.
+
+--------------------------------
+5.7 ABOUT "/about"
+--------------------------------
+Editorial layout. Headline "Built for the keys developers actually press." Sections: Why Backspace (an honest short story: developers type commands and symbols all day, and typing tests are built around prose); What makes it different (symbols, real commands, slow-key analytics, offline, private); The name (Backspace is the key you press most; the goal is to press it less); Made in India (ornament band, the Devanagari wordmark, one paragraph); How scoring works (the formulas in section 6); Roadmap (a 3-step timeline: now; next: GitHub login and synced history, leaderboards; later: shortcut and Vim trainers, a terminal version). End with links to Contact and GitHub.
+
+--------------------------------
+5.8 CONTACT "/contact"
+--------------------------------
+Left: a form (name, email, topic select: Feedback / Bug / Content correction / Collaboration / Other, message with a 600-character counter) with inline validation and accessible error messages. v1 has no backend: on submit, build a mailto: link with the fields prefilled and show "Opening your email app. You can also copy the message." with a "Copy message" button. Put a clearly marked constant CONTACT_EMAIL = "hello@example.com" at the top of the file for me to replace. Right: a card "Found a wrong command or flag? Tell us. We take content accuracy seriously." and a GitHub issues link (placeholder constant GITHUB_URL).
+
+--------------------------------
+5.9 PRIVACY "/privacy" and TERMS "/terms"
+--------------------------------
+Plain-English, well-structured documents with a sticky table of contents on desktop, a "Last updated" date and anchor links. At the top of both, a visible note: "Draft for review. Have a lawyer review this before you rely on it."
+PRIVACY must truthfully reflect v1: no accounts; typing results, settings and statistics are stored only in the browser's localStorage on the user's device; no analytics, no cookies and no third-party trackers in v1; Google Fonts are loaded from Google (say so honestly and mention self-hosting as a later improvement); the contact form opens the user's own email app; how to export and delete data; a section "If we add accounts or analytics later, we will update this page and the changelog"; the contact email placeholder.
+TERMS: acceptable use; no warranty; content is practice material and commands may differ between systems, so do not run them blindly; ownership of the Backspace name and logo; availability; changes to the terms; governing law as a clearly marked placeholder.
+
+--------------------------------
+5.10 CHANGELOG "/changelog"
+--------------------------------
+A data-driven timeline (array of entries): "v1.0.0 First release" with a list of what shipped, and a "Coming next" entry with planned items.
+
+--------------------------------
+5.11 CUSTOM 404
+--------------------------------
+On-brand, calm and short: a huge "404" in the display font and a terminal line "$ cd /this-page" that types itself and answers "bash: cd: /this-page: No such file or directory", with a blinking block cursor. Then a keycap button "Hit Backspace" that goes back (history -1, or home if there is none) and a secondary link "Go to Practice". On this page only, pressing the Backspace key also goes back.
+
+========================================
+6. TYPING ENGINE AND LOGIC (plain TypeScript, no React)
+========================================
+Input: capture "keydown" on a hidden input or focused container. Use event.key, ignore modifier-only keys, handle IME composition safely, block paste, cut and drag. Timestamp every keystroke with performance.now(). React renders from engine state, but the whole text must NOT re-render on each key: render lines as memoised components and update only the active line's character spans (or use refs), so input latency is imperceptible. Animate only transform and opacity.
+Per-test state: target lines, typed buffer per line, caret position, keystroke log [{t, expected, typed, correct}], per-second samples, start and end timestamps, mode config.
+Metrics:
+- correctChars: characters in committed and current lines that match the target (a correctly completed line's Enter counts as 1).
+- netWPM = (correctChars / 5) / minutes. rawWPM = (all typed characters / 5) / minutes. Minutes = elapsed time since the first keystroke.
+- accuracy% = correct keystrokes / total keystrokes x 100 (corrected mistakes still count as errors).
+- consistency% = 100 minus the coefficient of variation of per-second WPM, clamped 0-100.
+- backspaceScore = round(netWPM x (accuracy/100)^2). Use it as the headline score for personal bests alongside WPM.
+Per-key stats (persisted): for each expected character keep count, totalLatencyMs (time since the previous keystroke; ignore gaps over 2000 ms) and errors. Also keep bigram stats (previous character + expected character) for a future version.
+Slow keys: keys with at least 8 samples, ranked by average latency. Error keys: ranked by error rate, minimum 8 samples. Show the top N.
+ADAPTIVE "My weak keys" mode: score each line in all banks as the sum of per-character weights (normalised slowness + error rate), pick high-scoring lines, shuffle, and mix in 20% general lines so it is not repetitive.
+Streaks: a day counts if at least one test of 30 seconds or longer was completed, evaluated in the local time zone. Compute current and longest streak.
+XP and levels: XP per completed test = round(backspaceScore / 2) + 10. Level = floor(sqrt(XP / 50)) + 1. Titles: levels 1-2 Intern, 3-4 Junior, 5-7 Mid, 8-11 Senior, 12-17 Staff, 18+ Principal. Show a level-up modal when a threshold is crossed.
+Badges (data-driven): First Test; 10 Tests; 100 Tests; 7-Day Streak; 30-Day Streak; 50 WPM (95%+ accuracy); 80 WPM (95%+ accuracy); Flawless (100% accuracy, 30s or longer); Symbol Slayer (Symbols, 40+ WPM, 95%+ accuracy); Marathoner (finish a 300s test); Night Owl (a test completed between 00:00 and 04:00 local time).
+A test is saved only if at least 5 seconds were typed and at least 10 characters. Tests cancelled with Esc are not saved.
+Stored objects: settings, results[] (cap 500, newest first), keyStats, bigramStats, streak dates, xp, badges, personalBests keyed by "category|time|level", onboarding flags.
+
+========================================
+7. CONTENT BANK (src/data/content.ts)
+========================================
+Structure: content[category][level] = string[]; Code is nested by language. Each bullet below is ONE exact line of text to be typed (without the bullet). Store the lines as raw text and take care with escaping of quotes and backslashes in the source code. Every line must be valid, real and syntactically correct. Do NOT invent flags, commands or APIs. Keep lines under 110 characters. You may add a few more lines in the same style only if you are certain they are correct.
+
+GIT / easy
+• git status
+• git add .
+• git commit -m "fix typo"
+• git pull origin main
+• git push origin main
+• git log --oneline
+• git branch -a
+GIT / medium
+• git checkout -b feature/login-form
+• git stash pop
+• git commit --amend --no-edit
+• git diff --staged
+• git merge --no-ff feature/login-form
+• git reset --soft HEAD~1
+• git cherry-pick a1b2c3d
+GIT / hard
+• git rebase -i HEAD~3
+• git push --force-with-lease origin main
+• git log --graph --oneline --decorate --all
+• git reflog expire --expire=now --all
+• git bisect start HEAD v1.0.0
+• git submodule update --init --recursive
+• git worktree add -b hotfix ../hotfix main
+
+TERMINAL / easy
+• ls -la
+• cd ~/projects
+• mkdir -p src/components
+• cat package.json
+• cp .env.example .env
+• rm -rf node_modules
+• pwd
+TERMINAL / medium
+• grep -rn "TODO" src/
+• chmod +x deploy.sh
+• find . -name "*.log" -type f
+• tail -f logs/app.log
+• ps aux | grep node
+• curl -s https://api.example.com/health | jq .
+• ssh -i ~/.ssh/id_ed25519 dev@192.168.1.10
+TERMINAL / hard
+• find . -name "*.tmp" -print0 | xargs -0 rm -f
+• awk -F',' '{ sum += $3 } END { print sum }' sales.csv
+• sed -i 's/localhost:3000/api.example.com/g' .env
+• tar -czvf backup-$(date +%F).tar.gz ./data
+• lsof -i :3000 | awk 'NR>1 {print $2}' | xargs kill -9
+• for f in *.png; do mv "$f" "img_$f"; done
+
+DOCKER / easy
+• docker ps
+• docker images
+• docker pull node:20-alpine
+• docker stop my-app
+• docker logs my-app
+• docker build -t my-app .
+• docker rm my-app
+DOCKER / medium
+• docker run -d -p 3000:3000 --name my-app my-app
+• docker exec -it my-app sh
+• docker compose up -d --build
+• docker volume ls
+• docker run --rm -v $(pwd):/app -w /app node:20 npm test
+• docker network create backend
+• docker logs -f --tail 100 my-app
+DOCKER / hard
+• docker build --no-cache --platform linux/amd64 -t registry.example.com/my-app:1.0.0 .
+• docker system prune -af --volumes
+• docker run -d --restart unless-stopped -e NODE_ENV=production -p 8080:80 nginx:alpine
+• docker compose -f docker-compose.prod.yml up -d --remove-orphans
+• docker inspect --format='{{.State.Status}}' my-app
+• docker buildx build --push -t user/app:latest .
+• docker image prune -a --filter "until=24h"
+
+SQL (PostgreSQL flavour) / easy
+• SELECT * FROM users;
+• SELECT name, email FROM users LIMIT 10;
+• INSERT INTO users (name, email) VALUES ('Asha', 'asha@example.com');
+• UPDATE users SET active = true WHERE id = 1;
+• DELETE FROM sessions WHERE expired = true;
+• CREATE TABLE tasks (id INT PRIMARY KEY, title TEXT);
+• SELECT COUNT(*) FROM orders;
+SQL / medium
+• SELECT u.name, COUNT(o.id) FROM users u JOIN orders o ON o.user_id = u.id GROUP BY u.name;
+• SELECT * FROM products WHERE price BETWEEN 10 AND 50 ORDER BY price DESC;
+• ALTER TABLE users ADD COLUMN last_login TIMESTAMP;
+• CREATE INDEX idx_users_email ON users (email);
+• SELECT DISTINCT country FROM customers WHERE country IS NOT NULL;
+• SELECT category, AVG(price) AS avg_price FROM products GROUP BY category HAVING AVG(price) > 100;
+• UPDATE accounts SET balance = balance - 50 WHERE id = 7;
+SQL / hard
+• SELECT id, ROW_NUMBER() OVER (PARTITION BY team ORDER BY score DESC) AS rank FROM players;
+• SELECT u.id, COALESCE(SUM(o.total), 0) AS spend FROM users u LEFT JOIN orders o ON o.user_id = u.id GROUP BY u.id;
+• CREATE UNIQUE INDEX CONCURRENTLY idx_orders_ref ON orders (reference) WHERE deleted_at IS NULL;
+• SELECT * FROM events WHERE payload->>'type' = 'click' AND created_at >= CURRENT_DATE - 7;
+• BEGIN; UPDATE stock SET qty = qty - 1 WHERE sku = 'A-100'; COMMIT;
+• DELETE FROM logs WHERE id IN (SELECT id FROM logs ORDER BY created_at LIMIT 1000);
+
+CODE: JavaScript/TypeScript / easy
+• const total = items.length;
+• console.log("Hello, world!");
+• let isReady = false;
+• function add(a, b) { return a + b; }
+• const user = { name: "Asha", age: 25 };
+• if (count > 0) { reset(); }
+• import React from "react";
+CODE: JavaScript/TypeScript / medium
+• const doubled = numbers.map((n) => n * 2);
+• const res = await fetch("/api/users");
+• export default function App() { return <Home />; }
+• const [count, setCount] = useState(0);
+• items.filter((item) => item.active).forEach(render);
+• try { await save(data); } catch (err) { console.error(err); }
+• const sum = arr.reduce((acc, n) => acc + n, 0);
+CODE: JavaScript/TypeScript / hard
+• const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+• type Result<T> = { ok: true; value: T } | { ok: false; error: Error };
+• const clean = Object.fromEntries(Object.entries(map).filter(([, v]) => v !== null));
+• const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);
+• useEffect(() => { const id = setInterval(tick, 1000); return () => clearInterval(id); }, []);
+• export const selectUser = (s: RootState) => s.auth?.user ?? null;
+• const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+CODE: Python / easy
+• print("Hello, world!")
+• name = input("Name: ")
+• for i in range(10):
+• numbers = [1, 2, 3, 4, 5]
+• def greet(name): return f"Hi, {name}"
+• import os
+• if x > 0: print(x)
+CODE: Python / medium
+• squares = [n ** 2 for n in range(10) if n % 2 == 0]
+• with open("data.json") as f: data = json.load(f)
+• def fetch(url: str, retries: int = 3) -> dict:
+• user = {"id": 1, "tags": ["admin", "dev"]}
+• from collections import defaultdict
+• print(f"{name!r} scored {score:.2f}")
+• if __name__ == "__main__": main()
+CODE: Python / hard
+• ranked = dict(sorted(scores.items(), key=lambda kv: kv[1], reverse=True))
+• @functools.lru_cache(maxsize=None)
+• async def main(): await asyncio.gather(*(fetch(u) for u in urls))
+• matrix = [[row[i] for row in grid] for i in range(len(grid[0]))]
+• values = sorted(set(items), key=lambda x: (-x.score, x.name))[:10]
+• class Stack(Generic[T]):
+• self._items: list[T] = []
+
+AI PROMPTS / easy
+• Explain this function in simple terms.
+• Write a unit test for this function.
+• Summarize this error message and suggest a fix.
+• Convert this code from JavaScript to TypeScript.
+• Add comments to this code.
+• Suggest a better variable name for this.
+AI PROMPTS / medium
+• You are a senior backend engineer. Review this pull request and list the top 3 risks.
+• Refactor this React component to use hooks and keep the behavior identical.
+• Write a Python script that reads a CSV file and prints the average of each numeric column.
+• Explain the time complexity of this algorithm and suggest a faster approach.
+• Design a REST API for a todo app with endpoints, methods and example responses.
+AI PROMPTS / hard
+• Act as a code reviewer. Think step by step, point out bugs and security issues, then output the fixed code in a single code block.
+• Given the schema below, write an optimized PostgreSQL query, explain the indexes it needs, and list two edge cases that could break it.
+• Return ONLY valid JSON with keys "title", "summary" and "tags". Do not include markdown, comments or any extra text.
+• You are a staff engineer. Compare REST and GraphQL for a mobile app on a slow network, then give a recommendation in under 150 words.
+• Write a migration plan to move this Express app to Fastify with zero downtime, listing risks and a rollback step for each stage.
+
+SYMBOLS (the signature drill; symbol density increases with level) / easy
+• () => {}
+• [0] [1] [2]
+• <div></div>
+• $HOME ~/.config /usr/local/bin
+• a && b || !c
+• x !== y ? 1 : 0
+• { "key": [1, 2, 3] }
+SYMBOLS / medium
+• #!/usr/bin/env bash
+• @media (max-width: 600px) { }
+• ${name} ${PORT:-3000}
+• a |= b; c &= ~d; e ^= f;
+• C:\Users\dev\project\src
+• const re = /^[\w.-]+@[\w.-]+\.\w+$/;
+• <T extends Record<string, unknown>>(x: T) => x
+SYMBOLS / hard
+• if (a !== b && (c || !d) && (e ?? f)) { g(); }
+• $(( (a + b) * c % d ))
+• ^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$
+• cat *.log | grep -vE '^(#|$)' | sort -u > out.txt
+• x = a ? b : c ? d : e; y ||= z; w ??= v;
+• [[ -f "$file" && ! -L "$file" ]] || exit 1
+• echo "$USER@$HOSTNAME:$PWD" >> ~/.session.log
+
+========================================
+8. ACCESSIBILITY, RESPONSIVENESS, PERFORMANCE, QUALITY BAR
+========================================
+- WCAG AA contrast; full keyboard navigation; aria-live (polite) only for the final results, never per keystroke; the typing area has an accessible name and instructions; reduced motion respected everywhere (replace motion with instant state changes); dark mode checked on every page.
+- Responsive from 360px to 1920px. The typing screen works on tablets and shows the keyboard notice on phones.
+- Performance: lazy-load the heavy landing sections and the Progress charts; no layout shift; inline SVGs; no animation libraries other than Motion; no needless re-renders.
+- Seed NO fake user data. Every empty state must be friendly and useful. The only sample data allowed is the labelled SAMPLE rows on Leaderboard and the demo numbers in landing-page illustrations.
+- All copy is real, concise and honest. No lorem ipsum and no placeholder text except clearly marked constants (CONTACT_EMAIL, GITHUB_URL, SITE_URL). No emojis in the UI.
+
+========================================
+9. ORDER OF WORK AND DELIVERABLE
+========================================
+Build in this order and make sure each step works before the next: (1) design tokens, theme, layout, header, footer, routing, 404; (2) typing engine, content bank, Practice page; (3) Results page, stats storage, progress logic; (4) Progress and Settings pages; (5) Landing page with all animations; (6) About, Contact, Privacy, Terms, Changelog, Leaderboard; (7) SEO tags, manifest, service worker, accessibility pass.
+If you cannot finish everything in one response, finish steps 1-4 completely and tell me exactly what remains, rather than leaving anything half-built.
+At the end, give me a short summary of the routes, the file structure, and the three most important things I should check manually.
+Do not add features beyond this brief. If priorities conflict, choose typing latency and clarity first, then visual polish, then animation.

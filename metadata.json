@@ -1,0 +1,6 @@
+{
+  "name": "Backspace – Typing Practice for Developers",
+  "description": "Typing practice for the characters developers actually type. Practice git, terminal, Docker, SQL, code, AI prompts, and symbols with per-key latency analytics and offline-first storage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

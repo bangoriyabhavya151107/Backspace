@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Backspace – Typing Practice for Developers</title>
+    <meta name="description" content="Typing practice for the characters developers actually type. Practice git, terminal, Docker, SQL, code and AI prompts. Hit Backspace Less." />
+    <meta property="og:title" content="Backspace – Typing Practice for Developers" />
+    <meta property="og:description" content="Typing practice for the characters developers actually type. Practice git, terminal, Docker, SQL, code and AI prompts. Hit Backspace Less." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://backspace.dev" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Backspace – Typing Practice for Developers" />
+    <meta name="twitter:description" content="Typing practice for the characters developers actually type. Hit Backspace Less." />
+    <meta name="theme-color" content="#F2EDE4" id="meta-theme-color" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Backspace" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/assets/aistudio/Screenshot_2026-11-05_212537_f6c8df18.png" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect x='4' y='4' width='120' height='120' rx='28' fill='%231B1A17'/%3E%3Cpath d='M52 28H84C98 28 106 35 106 46C106 54 101 60 93 62C103 64 109 71 109 81C109 94 99 102 83 102H52V28ZM69 57H81C87 57 90 54 90 48C90 43 87 40 81 40H69V57ZM69 90H82C89 90 93 86 93 80C93 74 89 70 82 70H69V90Z' fill='%23F2EDE4'/%3E%3Cpath d='M18 64L42 46V57H64V71H42V82L18 64Z' fill='%23FF5B1F'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+Devanagari:wght@500;700&display=swap" rel="stylesheet" />
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('backspace:v1:settings');
+          var theme = 'light';
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.data && parsed.data.theme) {
+              theme = parsed.data.theme;
+            } else if (parsed && parsed.theme) {
+              theme = parsed.theme;
+            }
+          }
+          var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            var meta = document.getElementById('meta-theme-color');
+            if (meta) meta.setAttribute('content', '#14110D');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
