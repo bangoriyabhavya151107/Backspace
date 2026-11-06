@@ -5,8 +5,8 @@ import { useDocumentMeta } from '../hooks/useDocumentMeta';
 // ============================================================================
 // REPLACE THESE PLACEHOLDER CONSTANTS WITH YOUR PRODUCTION CONTACT & REPO URLS
 // ============================================================================
-export const CONTACT_EMAIL = 'hello@example.com';
-export const GITHUB_URL = 'https://github.com/example/backspace';
+export const CONTACT_EMAIL = 'bangoriyabhavya15@gmail.com';
+export const GITHUB_URL = 'https://github.com/bangoriyabhavya151107/Backspace.git';
 
 type ContactTopic =
   | 'Feedback'
